@@ -1,0 +1,169 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------------< ir.avanegar:dumper >-------------------------
+[INFO] Building dumper 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- exec:3.6.3:java (default-cli) @ dumper ---
+=== STARTING UNIDBG ANALYSIS ===
+com.github.unidbg.arm.backend.BackendException: unicorn.UnicornException: Invalid memory write (UC_ERR_WRITE_UNMAPPED)
+	at com.github.unidbg.arm.backend.UnicornBackend.emu_start(UnicornBackend.java:378)
+	at com.github.unidbg.AbstractEmulator.emulate(AbstractEmulator.java:378)
+	at com.github.unidbg.thread.Function64.run(Function64.java:39)
+	at com.github.unidbg.thread.MainTask.dispatch(MainTask.java:19)
+	at com.github.unidbg.thread.UniThreadDispatcher.run(UniThreadDispatcher.java:175)
+	at com.github.unidbg.thread.UniThreadDispatcher.runMainForResult(UniThreadDispatcher.java:99)
+	at com.github.unidbg.AbstractEmulator.runMainForResult(AbstractEmulator.java:341)
+	at com.github.unidbg.arm.AbstractARM64Emulator.eFunc(AbstractARM64Emulator.java:262)
+	at com.github.unidbg.linux.AbsoluteInitFunction.call(AbsoluteInitFunction.java:55)
+	at com.github.unidbg.linux.LinuxModule.callInitFunction(LinuxModule.java:143)
+	at com.github.unidbg.linux.AndroidElfLoader.loadInternal(AndroidElfLoader.java:181)
+	at com.github.unidbg.linux.AndroidElfLoader.loadInternal(AndroidElfLoader.java:63)
+	at com.github.unidbg.spi.AbstractLoader.load(AbstractLoader.java:237)
+	at com.github.unidbg.linux.android.dvm.BaseVM.loadLibrary(BaseVM.java:333)
+	at ir.avanegar.dumper.Main.<init>(Main.java:36)
+	at ir.avanegar.dumper.Main.main(Main.java:121)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.codehaus.mojo.exec.AbstractExecJavaBase.executeMainMethod(AbstractExecJavaBase.java:402)
+	at org.codehaus.mojo.exec.ExecJavaMojo.executeMainMethod(ExecJavaMojo.java:142)
+	at org.codehaus.mojo.exec.AbstractExecJavaBase.doExecClassLoader(AbstractExecJavaBase.java:377)
+	at org.codehaus.mojo.exec.AbstractExecJavaBase.lambda$execute$0(AbstractExecJavaBase.java:287)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+Caused by: unicorn.UnicornException: Invalid memory write (UC_ERR_WRITE_UNMAPPED)
+	at unicorn.Unicorn.emu_start(Native Method)
+	at com.github.unidbg.arm.backend.UnicornBackend.emu_start(UnicornBackend.java:376)
+	... 24 more
+debugger break at: 0x40078d7c @ Runnable|Function64 address=0x40023dec, arguments=[]
+>>> x0=0x0 x1=0x3 x2=0x8 x3=0x13 x4=0x2 x5=0x16 x6=0x17 x7=0x402d6000 x8=0x0 x9=0x0 x10=0xb7030 x11=0xb7060 x12=0x0 x13=0x40316000 x14=0x0
+>>> x15=0x40308000 x16=0x40082f78 x17=0x4029a63c x18=0x40319f50 x19=0xbffff708 x20=0x0 x21=0x0 x22=0x0 x23=0x0 x24=0x0 x25=0x0 x26=0x0 x27=0x0 x28=0x0 fp=0xbffff6e0
+>>> q0=0xffb0000000000000000(0.0, 2.021E-320) q1=0xfffffffffffffffbfffffffffffffffb(NaN, NaN) q2=0x0(0.0) q3=0xffb0000000000000000(0.0, 2.021E-320) q4=0xffb0000000000000000(0.0, 2.021E-320) q5=0x40100401401004014010040140100401(4.003911019303815, 4.003911019303815) q6=0x4000000000000000400000000(8.4879831639E-314, 8.4879831639E-314) q7=0xd100000000000000d1(1.033E-321, 1.033E-321) q8=0x0(0.0) q9=0x0(0.0) q10=0x0(0.0) q11=0x0(0.0) q12=0x0(0.0) q13=0x0(0.0) q14=0x0(0.0) q15=0x0(0.0)
+>>> q16=0x30d100000000000020d1(4.1506E-320, 6.1743E-320) q17=0x0(0.0) q18=0x30d100000000000020d1(4.1506E-320, 6.1743E-320) q19=0x0(0.0) q20=0x0(0.0) q21=0x0(0.0) q22=0x0(0.0) q23=0x0(0.0) q24=0x0(0.0) q25=0x0(0.0) q26=0x0(0.0) q27=0x0(0.0) q28=0x0(0.0) q29=0x0(0.0) q30=0x0(0.0) q31=0x0(0.0)
+LR=RX@0x40023ed0[libloader7007ea.so]0x23ed0
+SP=0xbffff6c0
+PC=RX@0x40078d7c[libloader7007ea.so]0x78d7c
+nzcv: N=0, Z=0, C=0, V=0, EL0, use SP_EL0
+    [libloader7007ea.so 0x78d78] [7a080094] 0x40078d78: "bl #0x4007af60"
+=> *[libloader7007ea.so*0x78d7c]*[e8031faa]*0x40078d7c:*"mov x8, xzr"
+    [libloader7007ea.so 0x78d80] [1f0100b9] 0x40078d80: "str wzr, [x8]"
+    [libloader7007ea.so 0x78d84] [c0035fd6] 0x40078d84: "ret"
+    [libloader7007ea.so 0x78d88] [ff8301d1] 0x40078d88: "sub sp, sp, #0x60"
+    [libloader7007ea.so 0x78d8c] [fd7b03a9] 0x40078d8c: "stp x29, x30, [sp, #0x30]"
+    [libloader7007ea.so 0x78d90] [f52300f9] 0x40078d90: "str x21, [sp, #0x40]"
+    [libloader7007ea.so 0x78d94] [f44f05a9] 0x40078d94: "stp x20, x19, [sp, #0x50]"
+    [libloader7007ea.so 0x78d98] [fdc30091] 0x40078d98: "add x29, sp, #0x30"
+    [libloader7007ea.so 0x78d9c] [1f2003d5] 0x40078d9c: "nop"
+    [libloader7007ea.so 0x78da0] [c906cb10] 0x40078da0: "adr x9, #0x4000ee78"
+    [libloader7007ea.so 0x78da4] [55d03bd5] 0x40078da4: "mrs x21, tpidr_el0"
+    [libloader7007ea.so 0x78da8] [200540ad] 0x40078da8: "ldp q0, q1, [x9]"
+    [libloader7007ea.so 0x78dac] [a81640f9] 0x40078dac: "ldr x8, [x21, #0x28]"
+    [libloader7007ea.so 0x78db0] [f30300aa] 0x40078db0: "mov x19, x0"
+    [libloader7007ea.so 0x78db4] [1f2003d5] 0x40078db4: "nop"
+    [libloader7007ea.so 0x78db8] [00370810] 0x40078db8: "adr x0, #0x40089498"
+
+JNIEnv->FindClass(org/support/internal/BaseApplication) was called from RX@0x4006de48[libloader7007ea.so]0x6de48
+JNIEnv->RegisterNatives(org/support/internal/BaseApplication, RW@0x4008a3d0[libloader7007ea.so]0x8a3d0, 4) was called from RX@0x4006de68[libloader7007ea.so]0x6de68
+RegisterNative(org/support/internal/BaseApplication, nativeSetup(Ljava/lang/ClassLoader;)V, RX@0x40069ff8[libloader7007ea.so]0x69ff8)
+RegisterNative(org/support/internal/BaseApplication, nativeBind(Landroid/content/Context;)V, RX@0x4006a344[libloader7007ea.so]0x6a344)
+RegisterNative(org/support/internal/BaseApplication, nativeResolve()Ljava/lang/Object;, RX@0x4006a460[libloader7007ea.so]0x6a460)
+RegisterNative(org/support/internal/BaseApplication, nativeRegisterFactory(Ljava/lang/Class;)V, RX@0x4006a588[libloader7007ea.so]0x6a588)
+
+[+] FIRE: Calling nativeSetup()...
+Find native function Java_org_support_internal_BaseApplication_nativeSetup => RX@0x40069ff8[libloader7007ea.so]0x69ff8
+File opened '/proc/self/status' with oflags=0x0 errno is 2 from RX@0x40252854[libc.so]0x22854
+JNIEnv->FindClass(android/app/ActivityThread) was called from RX@0x4002e278[libloader7007ea.so]0x2e278
+JNIEnv->GetStaticMethodID(android/app/ActivityThread.currentActivityThread()Landroid/app/ActivityThread;) => 0xf7e11563 was called from RX@0x4002e82c[libloader7007ea.so]0x2e82c
+JNIEnv->CallStaticObjectMethodV(class android/app/ActivityThread, currentActivityThread() => android.app.ActivityThread@900a488) was called from RX@0x4002e878[libloader7007ea.so]0x2e878
+JNIEnv->GetFieldID(android/app/ActivityThread.mBoundApplication Landroid/app/ActivityThread$AppBindData;) => 0x82f229d7 was called from RX@0x4002e470[libloader7007ea.so]0x2e470
+JNIEnv->GetObjectField(android.app.ActivityThread@900a488, mBoundApplication Landroid/app/ActivityThread$AppBindData; => android.app.ActivityThread$AppBindData@a7bec96) was called from RX@0x4002e4a8[libloader7007ea.so]0x2e4a8
+JNIEnv->GetFieldID(android/app/ActivityThread$AppBindData.appInfo Landroid/content/pm/ApplicationInfo;) => 0xd15a89d4 was called from RX@0x4002e470[libloader7007ea.so]0x2e470
+JNIEnv->GetObjectField(android.app.ActivityThread$AppBindData@a7bec96, appInfo Landroid/content/pm/ApplicationInfo; => android.content.pm.ApplicationInfo@15264e7e) was called from RX@0x4002e4a8[libloader7007ea.so]0x2e4a8
+JNIEnv->GetFieldID(android/content/pm/ApplicationInfo.sourceDir Ljava/lang/String;) => 0x304a6a5 was called from RX@0x4002e470[libloader7007ea.so]0x2e470
+JNIEnv->GetObjectField(android.content.pm.ApplicationInfo@15264e7e, sourceDir Ljava/lang/String; => "/data/app/ir.avanegar.core/base.apk") was called from RX@0x4002e4a8[libloader7007ea.so]0x2e4a8
+JNIEnv->GetStringUtfChars("/data/app/ir.avanegar.core/base.apk") was called from RX@0x400310cc[libloader7007ea.so]0x310cc
+
+[!] BINGO! Malware is trying to open: /data/app/ir.avanegar.core/base.apk
+[!] Redirecting to our fake base.apk...
+java.lang.IllegalArgumentException: file not exists: payload/base.apk
+	at com.github.unidbg.linux.file.SimpleFileIO.<init>(SimpleFileIO.java:62)
+	at ir.avanegar.dumper.Main.resolve(Main.java:79)
+	at com.github.unidbg.unix.UnixSyscallHandler.resolve(UnixSyscallHandler.java:115)
+	at com.github.unidbg.unix.UnixSyscallHandler.open(UnixSyscallHandler.java:345)
+	at com.github.unidbg.linux.ARM64SyscallHandler.openat(ARM64SyscallHandler.java:1421)
+	at com.github.unidbg.linux.ARM64SyscallHandler.hook(ARM64SyscallHandler.java:184)
+	at com.github.unidbg.arm.backend.UnicornBackend$11.hook(UnicornBackend.java:345)
+	at unicorn.Unicorn$NewHook.onInterrupt(Unicorn.java:128)
+	at unicorn.Unicorn.emu_start(Native Method)
+	at com.github.unidbg.arm.backend.UnicornBackend.emu_start(UnicornBackend.java:376)
+	at com.github.unidbg.AbstractEmulator.emulate(AbstractEmulator.java:378)
+	at com.github.unidbg.thread.Function64.run(Function64.java:39)
+	at com.github.unidbg.thread.MainTask.dispatch(MainTask.java:19)
+	at com.github.unidbg.thread.UniThreadDispatcher.run(UniThreadDispatcher.java:175)
+	at com.github.unidbg.thread.UniThreadDispatcher.runMainForResult(UniThreadDispatcher.java:99)
+	at com.github.unidbg.AbstractEmulator.runMainForResult(AbstractEmulator.java:341)
+	at com.github.unidbg.arm.AbstractARM64Emulator.eFunc(AbstractARM64Emulator.java:262)
+	at com.github.unidbg.Module.emulateFunction(Module.java:163)
+	at com.github.unidbg.linux.android.dvm.DvmObject.callJniMethod(DvmObject.java:135)
+	at com.github.unidbg.linux.android.dvm.DvmObject.callJniMethod(DvmObject.java:52)
+	at ir.avanegar.dumper.Main.<init>(Main.java:61)
+	at ir.avanegar.dumper.Main.main(Main.java:121)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.codehaus.mojo.exec.AbstractExecJavaBase.executeMainMethod(AbstractExecJavaBase.java:402)
+	at org.codehaus.mojo.exec.ExecJavaMojo.executeMainMethod(ExecJavaMojo.java:142)
+	at org.codehaus.mojo.exec.AbstractExecJavaBase.doExecClassLoader(AbstractExecJavaBase.java:377)
+	at org.codehaus.mojo.exec.AbstractExecJavaBase.lambda$execute$0(AbstractExecJavaBase.java:287)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+debugger break at: 0x4029a6a4 @ Runnable|Function64 address=0x40069ff8, arguments=[unidbg@0xfffe1640, 1772215688, 2042095056]
+>>> x0=0xffffff9c(-100) x1=0xbffff200 x2=0x0 x3=0x0 x4=0x40310200 x5=0x403102c0 x6=0x1 x7=0xbffff708 x8=0x38 x9=0x0 x10=0x1 x11=0x0 x12=0x23 x13=0x23 x14=0x23
+>>> x15=0xbffff090 x16=0x40082f08 x17=0x402528e0 x18=0x23 x19=0xbffff480 x20=0xbffff488 x21=0xfffe1640 x22=0xbffff708 x23=0x0 x24=0x0 x25=0xbffff708 x26=0x0 x27=0x0 x28=0x0 fp=0xbffff410
+>>> q0=0xbffff09000000000bffff100(1.591494946E-314, 1.5914948907E-314) q1=0xffffff80ffffffe000000000bffff070(1.591494875E-314, NaN) q2=0x0(0.0) q3=0x50000000000000004(2.0E-323, 2.5E-323) q4=0x10000000000000001(4.9E-324, 4.9E-324) q5=0x40000000000000004(2.0E-323, 2.0E-323) q6=0x20000000000000002(1.0E-323, 1.0E-323) q7=0x1110000000000000111(1.35E-321, 1.35E-321) q8=0x0(0.0) q9=0x0(0.0) q10=0x0(0.0) q11=0x0(0.0) q12=0x0(0.0) q13=0x0(0.0) q14=0x0(0.0) q15=0x0(0.0)
+>>> q16=0x31110000000000002111(4.1823E-320, 6.206E-320) q17=0x0(0.0) q18=0x31110000000000002111(4.1823E-320, 6.206E-320) q19=0x0(0.0) q20=0x0(0.0) q21=0x0(0.0) q22=0x0(0.0) q23=0x0(0.0) q24=0x0(0.0) q25=0x0(0.0) q26=0x0(0.0) q27=0x0(0.0) q28=0x0(0.0) q29=0x0(0.0) q30=0x0(0.0) q31=0x0(0.0)
+LR=RX@0x400310f4[libloader7007ea.so]0x310f4
+SP=0xbffff100
+PC=RX@0x4029a6a4[libc.so]0x6a6a4
+nzcv: N=0, Z=1, C=1, V=0, EL0, use SP_EL0
+__openat + 0x8
+    [libc.so            0x6a6a0] [010000d4] 0x4029a6a0: "svc #0"
+=> *[libc.so           *0x6a6a4]*[1f0440b1]*0x4029a6a4:*"cmn x0, #1, lsl #12"
+    [libc.so            0x6a6a8] [009480da] 0x4029a6a8: "cneg x0, x0, hi"
+    [libc.so            0x6a6ac] [28c8dc54] 0x4029a6ac: "b.hi #0x40253fb0"
+    [libc.so            0x6a6b0] [c0035fd6] 0x4029a6b0: "ret"
+    [libc.so            0x6a6b4] [281980d2] 0x4029a6b4: "mov x8, #0xc9"
+    [libc.so            0x6a6b8] [010000d4] 0x4029a6b8: "svc #0"
+    [libc.so            0x6a6bc] [1f0440b1] 0x4029a6bc: "cmn x0, #1, lsl #12"
+    [libc.so            0x6a6c0] [009480da] 0x4029a6c0: "cneg x0, x0, hi"
+    [libc.so            0x6a6c4] [68c7dc54] 0x4029a6c4: "b.hi #0x40253fb0"
+    [libc.so            0x6a6c8] [c0035fd6] 0x4029a6c8: "ret"
+    [libc.so            0x6a6cc] [a81980d2] 0x4029a6cc: "mov x8, #0xcd"
+    [libc.so            0x6a6d0] [010000d4] 0x4029a6d0: "svc #0"
+    [libc.so            0x6a6d4] [1f0440b1] 0x4029a6d4: "cmn x0, #1, lsl #12"
+    [libc.so            0x6a6d8] [009480da] 0x4029a6d8: "cneg x0, x0, hi"
+    [libc.so            0x6a6dc] [a8c6dc54] 0x4029a6dc: "b.hi #0x40253fb0"
+    [libc.so            0x6a6e0] [c0035fd6] 0x4029a6e0: "ret"
+
+
+[+] FIRE: Calling nativeBind()...
+Find native function Java_org_support_internal_BaseApplication_nativeBind => RX@0x4006a344[libloader7007ea.so]0x6a344
+JNIEnv->NewStringUTF("ir.avanegar.core.App") was called from RX@0x4006a3c0[libloader7007ea.so]0x6a3c0
+JNIEnv->GetStringUtfChars("ir.avanegar.core.App") was called from RX@0x4006c354[libloader7007ea.so]0x6c354
+JNIEnv->FindClass(ir/avanegar/core/App) was called from RX@0x4006c39c[libloader7007ea.so]0x6c39c
+JNIEnv->NewGlobalRef(class ir/avanegar/core/App) was called from RX@0x4006c3b0[libloader7007ea.so]0x6c3b0
+JNIEnv->GetMethodID(ir/avanegar/core/App.<init>()V) => 0x66bc298d was called from RX@0x4006c3dc[libloader7007ea.so]0x6c3dc
+JNIEnv->NewObjectV(class ir/avanegar/core/App, <init>() => ir.avanegar.core.App@61566581) was called from RX@0x40023f80[libloader7007ea.so]0x23f80
+JNIEnv->NewGlobalRef(ir.avanegar.core.App@61566581) was called from RX@0x4006c420[libloader7007ea.so]0x6c420
+JNIEnv->GetMethodID(ir/avanegar/core/App.attach(Landroid/content/Context;)V) => 0x3dd10c2e was called from RX@0x4002eb58[libloader7007ea.so]0x2eb58
+JNIEnv->CallVoidMethodV(ir.avanegar.core.App@61566581, attach(org.support.internal.BaseApplication@69a1dd88)) was called from RX@0x4002eb80[libloader7007ea.so]0x2eb80
+JNIEnv->GetMethodID(ir/avanegar/core/App.onCreate()V) => 0xfd487924 was called from RX@0x4002eb58[libloader7007ea.so]0x2eb58
+JNIEnv->CallVoidMethodV(ir.avanegar.core.App@61566581, onCreate()) was called from RX@0x4002eb80[libloader7007ea.so]0x2eb80
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.428 s
+[INFO] Finished at: 2026-08-27T15:53:18Z
+[INFO] ------------------------------------------------------------------------
