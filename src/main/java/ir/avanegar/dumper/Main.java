@@ -26,17 +26,21 @@ public class Main extends AbstractJni {
         System.out.println("=== STARTING UNIDBG ANALYSIS ===");
 
         try {
-            // هک سطح حافظه: خنثی کردن تله Anti-Debug در libc.so
+            // ۱. اول لودر بدافزار رو لود می‌کنیم تا سیستم‌عامل اندروید تو رم شبیه‌سازی بشه
+            DalvikModule dm = vm.loadLibrary(new File("payload/libloader7007ea.so"), false);
+            
+            // ۲. حالا که رم پر شده، تله رو خنثی می‌کنیم (جراحی حافظه)
             Module libc = memory.findModule("libc.so");
-            Symbol clock_gettime = libc.findSymbolByName("clock_gettime");
-            if (clock_gettime != null) {
-                System.out.println("[+] HACKING RAM: Patching clock_gettime() to bypass Anti-Debug...");
-                // تزریق اسمبلی به حافظه: mov x0, #0 (Success) ; ret
-                byte[] patch = new byte[] { 0x00, 0x00, (byte)0x80, (byte)0xd2, (byte)0xc0, 0x03, 0x5f, (byte)0xd6 };
-                emulator.getBackend().mem_write(clock_gettime.getAddress(), patch);
+            if (libc != null) {
+                Symbol clock_gettime = libc.findSymbolByName("clock_gettime");
+                if (clock_gettime != null) {
+                    System.out.println("[+] HACKING RAM: Patching clock_gettime() to bypass Anti-Debug...");
+                    byte[] patch = new byte[] { 0x00, 0x00, (byte)0x80, (byte)0xd2, (byte)0xc0, 0x03, 0x5f, (byte)0xd6 };
+                    emulator.getBackend().mem_write(clock_gettime.getAddress(), patch);
+                }
             }
 
-            DalvikModule dm = vm.loadLibrary(new File("payload/libloader7007ea.so"), false);
+            // ۳. اجرای توابع بدافزار
             dm.callJNI_OnLoad(emulator);
             
             System.out.println("\n[+] Resolving Target Class...");
@@ -53,12 +57,12 @@ public class Main extends AbstractJni {
             baseAppObj.callJniMethod(emulator, "nativeBind(Landroid/content/Context;)V", baseAppObj);
 
         } catch (Exception e) {
-            System.err.println("\n[-] CRASH OR EXCEPTION DURING UNPACKING:");
-            e.printStackTrace();
+            // چاپ خطاها در مسیر استاندارد تا تو فایل متنی ذخیره بشه
+            System.out.println("\n[-] CRASH OR EXCEPTION DURING UNPACKING:");
+            e.printStackTrace(System.out); 
         }
     }
 
-    // دور زدن ارور ساخته نشدن کلاس مخفی
     @Override
     public DvmObject<?> newObjectV(BaseVM vm, DvmClass dvmClass, String signature, VaList vaList) {
         if ("ir/avanegar/core/App-><init>()V".equals(signature)) {
