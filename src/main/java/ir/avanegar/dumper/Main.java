@@ -1,16 +1,22 @@
 package ir.avanegar.dumper;
 
 import com.github.unidbg.AndroidEmulator;
+import com.github.unidbg.Emulator;
 import com.github.unidbg.Module;
 import com.github.unidbg.Symbol;
+import com.github.unidbg.file.FileResult;
+import com.github.unidbg.file.IOResolver;
+import com.github.unidbg.file.linux.AndroidFileIO;
 import com.github.unidbg.linux.android.AndroidEmulatorBuilder;
 import com.github.unidbg.linux.android.AndroidResolver;
 import com.github.unidbg.linux.android.dvm.*;
+import com.github.unidbg.linux.file.SimpleFileIO;
 import com.github.unidbg.memory.Memory;
 
 import java.io.File;
 
-public class Main extends AbstractJni {
+// اضافه کردن IOResolver برای شنود و کنترل فایل‌ها
+public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
     private final AndroidEmulator emulator;
     private final VM vm;
 
@@ -18,6 +24,9 @@ public class Main extends AbstractJni {
         emulator = AndroidEmulatorBuilder.for64Bit().setProcessName("ir.avanegar.core").build();
         final Memory memory = emulator.getMemory();
         memory.setLibraryResolver(new AndroidResolver(23));
+
+        // فعال کردن شنودگرِ سیستم‌فایل مجازی
+        emulator.getSyscallHandler().addIOResolver(this);
 
         vm = emulator.createDalvikVM((File) null);
         vm.setJni(this);
@@ -30,10 +39,18 @@ public class Main extends AbstractJni {
             
             Module libc = memory.findModule("libc.so");
             if (libc != null) {
+                // خنثی کردن تایمر (Anti-Debug)
                 Symbol clock_gettime = libc.findSymbolByName("clock_gettime");
                 if (clock_gettime != null) {
                     byte[] patch = new byte[] { 0x00, 0x00, (byte)0x80, (byte)0xd2, (byte)0xc0, 0x03, 0x5f, (byte)0xd6 };
                     emulator.getBackend().mem_write(clock_gettime.getAddress(), patch);
+                }
+                // جراحی جدید: خنثی کردن تابع خودکشی (exit) در لینوکس
+                Symbol exit = libc.findSymbolByName("exit");
+                if (exit != null) {
+                    System.out.println("[+] HACKING RAM: Patching exit() to prevent suicide!");
+                    // دستور ret در اسمبلی: باعث میشه تابع هیچ کاری نکنه و برگرده
+                    emulator.getBackend().mem_write(exit.getAddress(), new byte[] { (byte)0xc0, 0x03, 0x5f, (byte)0xd6 });
                 }
             }
 
@@ -56,6 +73,18 @@ public class Main extends AbstractJni {
         }
     }
 
+    // تله‌ی GPS: هر وقت بدافزار خواست فایلی رو تو لینوکس باز کنه، این تابع اجرا میشه
+    @Override
+    public FileResult<AndroidFileIO> resolve(Emulator<AndroidFileIO> emulator, String pathname, int oflags) {
+        if (pathname.contains("base.apk")) {
+            System.out.println("\n[!] BINGO! Malware is trying to open: " + pathname);
+            System.out.println("[!] Redirecting to config.proto...");
+            // گول زدن بدافزار: دادن فایل config.proto به جای فایل APK نصبی!
+            return FileResult.success(new SimpleFileIO(oflags, new File("payload/config.proto"), pathname));
+        }
+        return null;
+    }
+
     @Override
     public DvmObject<?> newObjectV(BaseVM vm, DvmClass dvmClass, String signature, VaList vaList) {
         if ("ir/avanegar/core/App-><init>()V".equals(signature)) {
@@ -72,14 +101,10 @@ public class Main extends AbstractJni {
         if ("android/app/ActivityThread$AppBindData->appInfo:Landroid/content/pm/ApplicationInfo;".equals(signature)) {
             return vm.resolveClass("android/content/pm/ApplicationInfo").newObject(null);
         }
-        // ۱. دادن مسیر جعلی APK به بدافزار
         if ("android/content/pm/ApplicationInfo->sourceDir:Ljava/lang/String;".equals(signature)) {
-            System.out.println("[+] MOCK: Giving fake sourceDir (/data/app/ir.avanegar.core/base.apk)");
             return new StringObject(vm, "/data/app/ir.avanegar.core/base.apk");
         }
-        // ۲. پیش‌دستی: دادن مسیر دیتای برنامه
         if ("android/content/pm/ApplicationInfo->dataDir:Ljava/lang/String;".equals(signature)) {
-            System.out.println("[+] MOCK: Giving fake dataDir (/data/data/ir.avanegar.core)");
             return new StringObject(vm, "/data/data/ir.avanegar.core");
         }
         return super.getObjectField(vm, dvmObject, signature);
