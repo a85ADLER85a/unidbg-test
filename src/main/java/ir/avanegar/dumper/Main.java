@@ -26,27 +26,21 @@ public class Main extends AbstractJni {
         System.out.println("=== STARTING UNIDBG ANALYSIS ===");
 
         try {
-            // ۱. اول لودر بدافزار رو لود می‌کنیم تا سیستم‌عامل اندروید تو رم شبیه‌سازی بشه
             DalvikModule dm = vm.loadLibrary(new File("payload/libloader7007ea.so"), false);
             
-            // ۲. حالا که رم پر شده، تله رو خنثی می‌کنیم (جراحی حافظه)
             Module libc = memory.findModule("libc.so");
             if (libc != null) {
                 Symbol clock_gettime = libc.findSymbolByName("clock_gettime");
                 if (clock_gettime != null) {
-                    System.out.println("[+] HACKING RAM: Patching clock_gettime() to bypass Anti-Debug...");
                     byte[] patch = new byte[] { 0x00, 0x00, (byte)0x80, (byte)0xd2, (byte)0xc0, 0x03, 0x5f, (byte)0xd6 };
                     emulator.getBackend().mem_write(clock_gettime.getAddress(), patch);
                 }
             }
 
-            // ۳. اجرای توابع بدافزار
             dm.callJNI_OnLoad(emulator);
             
-            System.out.println("\n[+] Resolving Target Class...");
             DvmClass baseAppClass = vm.resolveClass("org/support/internal/BaseApplication");
             DvmObject<?> baseAppObj = baseAppClass.newObject(null);
-
             DvmClass classLoaderClass = vm.resolveClass("java/lang/ClassLoader");
             DvmObject<?> classLoaderObj = classLoaderClass.newObject(null);
 
@@ -57,19 +51,37 @@ public class Main extends AbstractJni {
             baseAppObj.callJniMethod(emulator, "nativeBind(Landroid/content/Context;)V", baseAppObj);
 
         } catch (Exception e) {
-            // چاپ خطاها در مسیر استاندارد تا تو فایل متنی ذخیره بشه
-            System.out.println("\n[-] CRASH OR EXCEPTION DURING UNPACKING:");
-            e.printStackTrace(System.out); 
+            System.out.println("\n[-] CRASH DETECTED:");
+            e.printStackTrace(System.out);
         }
     }
 
+    // ۱. دروغ گفتن به بدافزار موقع درخواست فیلدها و ساخت کلاس
     @Override
     public DvmObject<?> newObjectV(BaseVM vm, DvmClass dvmClass, String signature, VaList vaList) {
         if ("ir/avanegar/core/App-><init>()V".equals(signature)) {
-            System.out.println("[+] Bypassing ir.avanegar.core.App constructor call!");
             return dvmClass.newObject(null);
         }
         return super.newObjectV(vm, dvmClass, signature, vaList);
+    }
+
+    @Override
+    public DvmObject<?> getObjectField(BaseVM vm, DvmObject<?> dvmObject, String signature) {
+        if ("android/app/ActivityThread->mBoundApplication:Landroid/app/ActivityThread$AppBindData;".equals(signature)) {
+            System.out.println("[+] MOCK: Giving fake AppBindData to ActivityThread");
+            return vm.resolveClass("android/app/ActivityThread$AppBindData").newObject(null);
+        }
+        return super.getObjectField(vm, dvmObject, signature);
+    }
+
+    // ۲. خفه کردن متد attach تا کرش نکنه
+    @Override
+    public void callVoidMethodV(BaseVM vm, DvmObject<?> dvmObject, String signature, VaList vaList) {
+        if ("ir/avanegar/core/App->attach(Landroid/content/Context;)V".equals(signature)) {
+            System.out.println("[+] MOCK: Ignoring ir.avanegar.core.App.attach() call");
+            return; 
+        }
+        super.callVoidMethodV(vm, dvmObject, signature, vaList);
     }
 
     public static void main(String[] args) {
