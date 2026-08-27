@@ -64,29 +64,33 @@ public class Main extends AbstractJni {
         return super.newObjectV(vm, dvmClass, signature, vaList);
     }
 
-    // اضافه شدن جعل ApplicationInfo برای بدافزار
     @Override
     public DvmObject<?> getObjectField(BaseVM vm, DvmObject<?> dvmObject, String signature) {
         if ("android/app/ActivityThread->mBoundApplication:Landroid/app/ActivityThread$AppBindData;".equals(signature)) {
-            System.out.println("[+] MOCK: Giving fake AppBindData");
             return vm.resolveClass("android/app/ActivityThread$AppBindData").newObject(null);
         }
         if ("android/app/ActivityThread$AppBindData->appInfo:Landroid/content/pm/ApplicationInfo;".equals(signature)) {
-            System.out.println("[+] MOCK: Giving fake ApplicationInfo");
             return vm.resolveClass("android/content/pm/ApplicationInfo").newObject(null);
+        }
+        // ۱. دادن مسیر جعلی APK به بدافزار
+        if ("android/content/pm/ApplicationInfo->sourceDir:Ljava/lang/String;".equals(signature)) {
+            System.out.println("[+] MOCK: Giving fake sourceDir (/data/app/ir.avanegar.core/base.apk)");
+            return new StringObject(vm, "/data/app/ir.avanegar.core/base.apk");
+        }
+        // ۲. پیش‌دستی: دادن مسیر دیتای برنامه
+        if ("android/content/pm/ApplicationInfo->dataDir:Ljava/lang/String;".equals(signature)) {
+            System.out.println("[+] MOCK: Giving fake dataDir (/data/data/ir.avanegar.core)");
+            return new StringObject(vm, "/data/data/ir.avanegar.core");
         }
         return super.getObjectField(vm, dvmObject, signature);
     }
 
-    // مسدود کردن فراخوانی onCreate علاوه بر attach
     @Override
     public void callVoidMethodV(BaseVM vm, DvmObject<?> dvmObject, String signature, VaList vaList) {
         if ("ir/avanegar/core/App->attach(Landroid/content/Context;)V".equals(signature)) {
-            System.out.println("[+] MOCK: Ignoring attach() call");
             return; 
         }
         if ("ir/avanegar/core/App->onCreate()V".equals(signature)) {
-            System.out.println("[+] MOCK: Ignoring onCreate() call");
             return; 
         }
         super.callVoidMethodV(vm, dvmObject, signature, vaList);
