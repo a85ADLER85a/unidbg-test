@@ -1,6 +1,7 @@
 package ir.avanegar.dumper;
 
 import com.github.unidbg.AndroidEmulator;
+import com.github.unidbg.Module;
 import com.github.unidbg.linux.android.AndroidEmulatorBuilder;
 import com.github.unidbg.linux.android.AndroidResolver;
 import com.github.unidbg.linux.android.dvm.AbstractJni;
@@ -15,17 +16,18 @@ public class Main extends AbstractJni {
     private final VM vm;
 
     public Main() {
-        // ۱. ساخت پردازنده ۶۴ بیتی
+        // ۱. ساخت یک پردازنده ۶۴ بیتی با اسم پکیج بدافزار
         emulator = AndroidEmulatorBuilder.for64Bit().setProcessName("ir.avanegar.core").build();
         final Memory memory = emulator.getMemory();
         memory.setLibraryResolver(new AndroidResolver(23));
 
-        // ۲. ردیابی سیستم‌کال‌ها
+        // ۲. ردیابی سیستم‌کال‌ها (برای دیدن فایل‌هایی که بدافزار باز می‌کنه)
         emulator.getSyscallHandler().setVerbose(true);
 
-        // ۳. رفع ابهام با تعیین دقیق نوع ورودی (null به عنوان فایل یا کلاس)
-        vm = emulator.createDalvikVM((File) null);
+        // ۳. ساخت ماشین مجازی جاوا (دروغین)
+        vm = emulator.createDalvikVM(null);
         vm.setJni(this);
+        // روشن کردن لاگ‌های JNI برای دیدن رمزگشایی و تزریق Dex
         vm.setVerbose(true); 
 
         // ۴. لود کردن فایل مخرب
@@ -47,3 +49,4 @@ public class Main extends AbstractJni {
         new Main();
     }
 }
+
