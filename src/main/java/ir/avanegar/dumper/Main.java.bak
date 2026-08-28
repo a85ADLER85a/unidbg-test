@@ -1,21 +1,16 @@
 package ir.avanegar.dumper;
 
 import com.github.unidbg.AndroidEmulator;
-import com.github.unidbg.Emulator;
 import com.github.unidbg.Module;
 import com.github.unidbg.Symbol;
-import com.github.unidbg.file.FileResult;
-import com.github.unidbg.file.IOResolver;
-import com.github.unidbg.file.linux.AndroidFileIO;
 import com.github.unidbg.linux.android.AndroidEmulatorBuilder;
 import com.github.unidbg.linux.android.AndroidResolver;
 import com.github.unidbg.linux.android.dvm.*;
-import com.github.unidbg.linux.file.SimpleFileIO;
 import com.github.unidbg.memory.Memory;
 
 import java.io.File;
 
-public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
+public class Main extends AbstractJni {
     private final AndroidEmulator emulator;
     private final VM vm;
 
@@ -24,24 +19,24 @@ public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
         final Memory memory = emulator.getMemory();
         memory.setLibraryResolver(new AndroidResolver(23));
 
-        emulator.getSyscallHandler().addIOResolver(this);
-
         vm = emulator.createDalvikVM((File) null);
         vm.setJni(this);
         vm.setVerbose(true);
 
-        System.out.println("=== STARTING UNIDBG ANALYSIS ===");
+        System.out.println("=== STARTING UNIDBG ANALYSIS (PURE TRACING MODE) ===");
 
         try {
             DalvikModule dm = vm.loadLibrary(new File("payload/libloader7007ea.so"), false);
             
             Module libc = memory.findModule("libc.so");
             if (libc != null) {
+                // ۱. خنثی کردن تایمر (Anti-Debug)
                 Symbol clock_gettime = libc.findSymbolByName("clock_gettime");
                 if (clock_gettime != null) {
                     byte[] patch = new byte[] { 0x00, 0x00, (byte)0x80, (byte)0xd2, (byte)0xc0, 0x03, 0x5f, (byte)0xd6 };
                     emulator.getBackend().mem_write(clock_gettime.getAddress(), patch);
                 }
+                // ۲. خنثی کردن دستور خروج (exit) تا بدافزار بسته نشه
                 Symbol exit = libc.findSymbolByName("exit");
                 if (exit != null) {
                     emulator.getBackend().mem_write(exit.getAddress(), new byte[] { (byte)0xc0, 0x03, 0x5f, (byte)0xd6 });
@@ -55,32 +50,24 @@ public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
             DvmClass classLoaderClass = vm.resolveClass("java/lang/ClassLoader");
             DvmObject<?> classLoaderObj = classLoaderClass.newObject(null);
 
-            System.out.println("\n[+] FIRE: Calling nativeSetup()...");
-            // روشن کردن دوربین مداربسته برای رصد دقیق باز کردن فایل
+            // روشن کردن دوربین مداربسته لینوکسی
             emulator.getSyscallHandler().setVerbose(true);
+
+            System.out.println("\n[+] FIRE: Calling nativeSetup()...");
             baseAppObj.callJniMethod(emulator, "nativeSetup(Ljava/lang/ClassLoader;)V", classLoaderObj);
-            emulator.getSyscallHandler().setVerbose(false);
 
             System.out.println("\n[+] FIRE: Calling nativeBind()...");
             baseAppObj.callJniMethod(emulator, "nativeBind(Landroid/content/Context;)V", baseAppObj);
 
+            emulator.getSyscallHandler().setVerbose(false);
+
         } catch (Exception e) {
-            System.out.println("\n[-] CRASH DETECTED:");
+            System.out.println("\n[-] EXCEPTION DETECTED:");
             e.printStackTrace(System.out);
         }
     }
 
-    @Override
-    public FileResult<AndroidFileIO> resolve(Emulator<AndroidFileIO> emulator, String pathname, int oflags) {
-        if (pathname.contains("base.apk")) {
-            System.out.println("\n[!] BINGO! Malware is trying to open: " + pathname);
-            System.out.println("[!] Redirecting to our fake base.apk...");
-            // آدرس رو تغییر دادیم به فایل زیپی که خودمون ساختیم
-            return FileResult.success(new SimpleFileIO(oflags, new File("payload/base.apk"), pathname));
-        }
-        return null;
-    }
-
+    // برطرف کردن نیازهای جاوا (کلاس‌ها و متدها)
     @Override
     public DvmObject<?> newObjectV(BaseVM vm, DvmClass dvmClass, String signature, VaList vaList) {
         if ("ir/avanegar/core/App-><init>()V".equals(signature)) {
