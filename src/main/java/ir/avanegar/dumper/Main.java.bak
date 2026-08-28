@@ -15,7 +15,6 @@ import com.github.unidbg.memory.Memory;
 
 import java.io.File;
 
-// اضافه کردن IOResolver برای شنود و کنترل فایل‌ها
 public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
     private final AndroidEmulator emulator;
     private final VM vm;
@@ -25,7 +24,6 @@ public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
         final Memory memory = emulator.getMemory();
         memory.setLibraryResolver(new AndroidResolver(23));
 
-        // فعال کردن شنودگرِ سیستم‌فایل مجازی
         emulator.getSyscallHandler().addIOResolver(this);
 
         vm = emulator.createDalvikVM((File) null);
@@ -39,17 +37,13 @@ public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
             
             Module libc = memory.findModule("libc.so");
             if (libc != null) {
-                // خنثی کردن تایمر (Anti-Debug)
                 Symbol clock_gettime = libc.findSymbolByName("clock_gettime");
                 if (clock_gettime != null) {
                     byte[] patch = new byte[] { 0x00, 0x00, (byte)0x80, (byte)0xd2, (byte)0xc0, 0x03, 0x5f, (byte)0xd6 };
                     emulator.getBackend().mem_write(clock_gettime.getAddress(), patch);
                 }
-                // جراحی جدید: خنثی کردن تابع خودکشی (exit) در لینوکس
                 Symbol exit = libc.findSymbolByName("exit");
                 if (exit != null) {
-                    System.out.println("[+] HACKING RAM: Patching exit() to prevent suicide!");
-                    // دستور ret در اسمبلی: باعث میشه تابع هیچ کاری نکنه و برگرده
                     emulator.getBackend().mem_write(exit.getAddress(), new byte[] { (byte)0xc0, 0x03, 0x5f, (byte)0xd6 });
                 }
             }
@@ -62,7 +56,10 @@ public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
             DvmObject<?> classLoaderObj = classLoaderClass.newObject(null);
 
             System.out.println("\n[+] FIRE: Calling nativeSetup()...");
+            // روشن کردن دوربین مداربسته برای رصد دقیق باز کردن فایل
+            emulator.getSyscallHandler().setVerbose(true);
             baseAppObj.callJniMethod(emulator, "nativeSetup(Ljava/lang/ClassLoader;)V", classLoaderObj);
+            emulator.getSyscallHandler().setVerbose(false);
 
             System.out.println("\n[+] FIRE: Calling nativeBind()...");
             baseAppObj.callJniMethod(emulator, "nativeBind(Landroid/content/Context;)V", baseAppObj);
@@ -73,14 +70,13 @@ public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
         }
     }
 
-    // تله‌ی GPS: هر وقت بدافزار خواست فایلی رو تو لینوکس باز کنه، این تابع اجرا میشه
     @Override
     public FileResult<AndroidFileIO> resolve(Emulator<AndroidFileIO> emulator, String pathname, int oflags) {
         if (pathname.contains("base.apk")) {
             System.out.println("\n[!] BINGO! Malware is trying to open: " + pathname);
-            System.out.println("[!] Redirecting to config.proto...");
-            // گول زدن بدافزار: دادن فایل config.proto به جای فایل APK نصبی!
-            return FileResult.success(new SimpleFileIO(oflags, new File("payload/config.proto"), pathname));
+            System.out.println("[!] Redirecting to our fake base.apk...");
+            // آدرس رو تغییر دادیم به فایل زیپی که خودمون ساختیم
+            return FileResult.success(new SimpleFileIO(oflags, new File("payload/base.apk"), pathname));
         }
         return null;
     }
