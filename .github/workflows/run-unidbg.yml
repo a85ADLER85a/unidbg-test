@@ -21,7 +21,7 @@ jobs:
     - name: Compile and Run Unidbg
       run: |
         mvn clean compile
-        mvn exec:java -Dexec.mainClass="ir.avanegar.dumper.Main" > analysis_log.txt
+        mvn exec:java -Dexec.mainClass="ir.avanegar.dumper.Main" | tee analysis_log.txt
         
     - name: Upload Logs
       if: always()
