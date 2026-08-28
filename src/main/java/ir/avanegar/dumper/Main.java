@@ -28,7 +28,7 @@ public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
 
         vm = emulator.createDalvikVM((File) null);
         vm.setJni(this);
-        vm.setVerbose(true); // نمایش تمام عملیات‌های جاوا (برای دیدن لحظه شکار)
+        vm.setVerbose(true);
 
         System.out.println("=== STARTING UNIDBG ANALYSIS (SNIPER MODE) ===");
 
@@ -67,22 +67,19 @@ public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
         }
     }
 
-    // هدایتگر فایل: دادنِ همون APK واقعیِ ۲ مگابایتی به بدافزار
     @Override
     public FileResult<AndroidFileIO> resolve(Emulator<AndroidFileIO> emulator, String pathname, int oflags) {
         if (pathname.contains("base.apk")) {
             System.out.println("\n[!] VFS HOOK: Redirecting to REAL MALWARE APK!");
             return FileResult.success(new SimpleFileIO(oflags, new File("payload/real_malware.apk"), pathname));
         }
-        // اگر بدافزار سعی کنه دکس رو روی هارد ذخیره کنه مچش رو می‌گیریم
         if (pathname.endsWith(".dex") || pathname.endsWith(".jar")) {
             System.out.println("\n[🎯 SNIPER BINGO] Packer is writing decrypted file to disk: " + pathname);
-            System.exit(0); // شلیک نهایی و بستن شبیه‌ساز برای ذخیره وقت
+            System.exit(0);
         }
         return null;
     }
 
-    // تک‌تیرانداز جاوا: شنود کلاس‌ها و فایل‌های دکسِ در حال بارگذاری
     @Override
     public DvmObject<?> newObjectV(BaseVM vm, DvmClass dvmClass, String signature, VaList vaList) {
         if (signature.contains("ir/avanegar/core/App-><init>()V")) {
@@ -91,7 +88,7 @@ public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
         if (signature.contains("DexClassLoader") || signature.contains("InMemoryDexClassLoader")) {
             System.out.println("\n[🎯 SNIPER BINGO] Packer is loading the decrypted DEX into RAM!");
             System.out.println("[🎯] Hook Intercepted: " + signature);
-            System.exit(0); // شلیک نهایی!
+            System.exit(0);
         }
         return super.newObjectV(vm, dvmClass, signature, vaList);
     }
@@ -111,20 +108,6 @@ public class Main extends AbstractJni implements IOResolver<AndroidFileIO> {
             return new StringObject(vm, "/data/data/ir.avanegar.core");
         }
         return super.getObjectField(vm, dvmObject, signature);
-    }
-
-    // تک‌تیرانداز حافظه رم: بررسی بایت‌های در حال انتقال در JNI
-    @Override
-    public void setByteArrayRegion(BaseVM vm, DvmObject<?> dvmObject, int start, int length, byte[] bytes) {
-        if (bytes != null && bytes.length > 8) {
-             // چک کردن Magic Number فایل دکس (dex\n)
-             if (bytes[0] == 0x64 && bytes[1] == 0x65 && bytes[2] == 0x78 && bytes[3] == 0x0a) {
-                 System.out.println("\n[🎯 SNIPER BINGO] 'dex\\n035' MAGIC DETECTED IN RAM!");
-                 System.out.println("[🎯] Size of decrypted DEX: " + bytes.length + " bytes");
-                 System.exit(0); // شلیک نهایی!
-             }
-        }
-        super.setByteArrayRegion(vm, dvmObject, start, length, bytes);
     }
 
     @Override
